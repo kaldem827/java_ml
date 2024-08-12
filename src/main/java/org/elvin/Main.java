@@ -37,3 +37,9 @@ public class Main {
         }
     }
 }
+
+/*
+* O Naive Bayes é uma escolha adequada para o problema dado, especialmente como um modelo inicial para avaliar a classificação entre Bart e Homer.
+*  Contudo, se a precisão não for suficiente, pode ser interessante explorar modelos mais complexos que capturam interações entre atributos,
+*  como árvores de decisão ou modelos baseados em redes neurais.
+*  */
