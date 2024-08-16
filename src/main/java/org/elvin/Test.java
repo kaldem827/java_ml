@@ -1,23 +1,18 @@
 package org.elvin;
 
-
-import weka.classifiers.Classifier;
 import weka.classifiers.Evaluation;
 import weka.classifiers.bayes.NaiveBayes;
-import weka.classifiers.bayes.NaiveBayesMultinomial;
-import weka.core.Instance;
 import weka.core.Instances;
 import weka.core.converters.ConverterUtils.DataSource;
 import weka.filters.Filter;
 import weka.filters.unsupervised.attribute.Normalize;
-import weka.filters.unsupervised.attribute.Remove;
 import weka.filters.unsupervised.attribute.ReplaceMissingValues;
 
 import java.util.Random;
 
-public class Main {
-    public static void main(String[] args) {
-        try {
+public class Test {
+
+        public static void main(String[] args) throws Exception {
             DataSource source = new DataSource(Main.class.getResourceAsStream("/text/caracteristicas.arff"));
             Instances dataset = source.getDataSet();
 
@@ -26,7 +21,6 @@ public class Main {
             if (dataset.classIndex() == -1) {
                 dataset.setClassIndex(dataset.numAttributes() - 1);
             }
-
 
             // Handle missing values by replacing them with the mean/mode
             ReplaceMissingValues replaceMissing = new ReplaceMissingValues();
@@ -38,17 +32,21 @@ public class Main {
             normalize.setInputFormat(dataNoMissing);
             Instances normalizedData = Filter.useFilter(dataNoMissing, normalize);
 
+            // Shuffle the data to ensure random distribution of instances
+            normalizedData.randomize(new Random(1));
 
+            // Split the dataset into 80% training and 20% testing
+            int trainSize = (int) Math.round(normalizedData.numInstances() * 0.8);
+            int testSize = normalizedData.numInstances() - trainSize;
+            Instances trainData = new Instances(normalizedData, 0, trainSize);
+            Instances testData = new Instances(normalizedData, trainSize, testSize);
 
-            // Create and train NaiveBayes classifier
-            Classifier naiveBayes = new NaiveBayesMultinomial();
-            naiveBayes.buildClassifier(normalizedData);
+            NaiveBayes naiveBayes = new NaiveBayes();
+            naiveBayes.buildClassifier(trainData);
 
-            // Evaluate the model using cross-validation
-            Evaluation evaluation = new Evaluation(normalizedData);
-            evaluation.crossValidateModel(naiveBayes, normalizedData, 10, new Random(1));
+            Evaluation evaluation = new Evaluation(trainData);
+            evaluation.evaluateModel(naiveBayes, testData);
 
-            // Output evaluation results
             System.out.println(evaluation.toSummaryString("\nResults\n======\n", false));
             System.out.println("Confusion Matrix:");
             double[][] confusionMatrix = evaluation.confusionMatrix();
@@ -59,19 +57,6 @@ public class Main {
                 System.out.println();
             }
 
-            // Classify a new instance (optional)
-            // Assuming you have an Instances object for new data
-            // Instances newData = ...;
-            // double label = naiveBayes.classifyInstance(newData.instance(0));
-            // System.out.println("Predicted class: " + filteredData.classAttribute().value((int) label));
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-}
 
-/*
-* O Naive Bayes é uma escolha adequada para o problema dado, especialmente como um modelo inicial para avaliar a classificação entre Bart e Homer.
-*  Contudo, se a precisão não for suficiente, pode ser interessante explorar modelos mais complexos que capturam interações entre atributos,
-*  como árvores de decisão ou modelos baseados em redes neurais.
-*  */
+        }
+}
